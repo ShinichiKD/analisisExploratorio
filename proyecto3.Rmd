@@ -1,0 +1,247 @@
+---
+title: "ProyectoUnidad3"
+output:
+  pdf_document: default
+  html_document: default
+date: "2024-05-27"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+
+#install.packages('tinytex')
+if (!require("tinytex")) {
+  install.packages('tinytex')
+  library(tinytex)
+}
+
+
+
+# Verificar si la instalación fue exitosa
+tinytex:::is_tinytex()
+
+```
+# Formulación de Preguntas e Hipótesis
+
+## Preguntas de Investigación
+
+- **¿Cómo afecta el tipo de dispositivo al número de sesiones de los usuarios?**
+- **¿Existe una relación entre los kilómetros conducidos y el número de sesiones?**
+- **¿Los días de actividad afectan la retención de los usuarios?**
+
+## Hipótesis Relacionadas
+
+- **Usuarios con Android tienen más sesiones que aquellos con iPhone**
+- **Usuarios que conducen más kilómetros tienen sesiones más frecuentes.**
+- **Un mayor número de días de actividad conduce a una menor tasa de abandono.**
+
+# Importación de datos
+Este dataset fue obtenido desde Kaggle (https://www.kaggle.com/datasets/raminhuseyn/wase-navigation-app-dataset?select=waze_app_dataset.csv) , luego fue re-subido a un repositorio de github para poder ser utilizado desde una URL directamente. 
+
+
+
+```{r lecturadatos}
+library(readr)
+url <- "https://raw.githubusercontent.com/ShinichiKD/analisisExploratorio/main/waze_app_dataset.csv"
+waze_app_dataset <- read_csv(url, 
+    col_names = TRUE, col_types = cols(label = col_factor(levels = c("retained", 
+        "churned")), device = col_factor(levels = c("Android", 
+        "iPhone"))), skip = 0)
+head(waze_app_dataset)
+str(waze_app_dataset)
+```
+
+
+
+# Acerca del dataset
+
+El conjunto de datos ofrece una visión completa de las interacciones de los usuarios dentro de la aplicación de navegación Waze, crucial para comprender y mitigar la pérdida de usuarios.
+
+## Variables presentes
+
+
+- **ID** Identificador único para cada usuario.
+- **label** Etiqueta que indica el estado de abandono de usuarios (p. ej., abandonado, retenido).
+- **sessions** Número de sesiones registradas por el usuario.
+- **drives** Número de unidades completadas por el usuario.
+- **total_sessions** Número total de sesiones registradas para el usuario.
+- **n_days_after_onboarding** Número de días desde la incorporación del usuario.
+- **total_navigations_fav1** Número total de navegaciones por ruta favorita 1.
+- **total_navigations_fav2** Número total de navegaciones por ruta favorita 2.
+- **driven_km_drives** Distancia total recorrida por el usuario en kilómetros.
+- **duration_minutes_drives** Duración total de los recorridos en minutos.
+- **activity_days** Número de días con actividad de usuario registrada.
+- **driving_days** Número de días con actividad de conducción registrada.
+- **device** Dispositivo utilizado por el usuario para la navegación (p. ej., teléfono inteligente, tableta).
+
+# Limpieza de Datos
+
+## Datos faltantes
+
+
+```{r datosfaltantes}
+
+
+
+totalFaltantes<-sum(is.na(waze_app_dataset))
+
+numero_de_filas <- nrow(waze_app_dataset)
+porcentaje_faltantes <- (totalFaltantes / numero_de_filas) * 100
+summary(waze_app_dataset)
+```
+
+## Manejo de datos faltantes
+En el análisis se encontró que tenemos un total de `r totalFaltantes` de datos faltantes, además observando el resumen , podemos ver que  todos corresponden a la columna "label", obteniendo un  `r porcentaje_faltantes`% de datos faltantes en el dataset. Esta cantidad de datos no es significativa , por lo tanto estas filas seran eliminadas.
+
+
+```{r manejodatosfaltantes}
+
+
+
+waze_app_dataset_limpios <- na.omit(waze_app_dataset)
+summary(waze_app_dataset_limpios)
+
+
+
+
+
+```
+## Detectar datos atipicos
+
+
+```{r oulayers}
+
+
+
+boxplot(waze_app_dataset_limpios$sessions, main="sessions")
+boxplot(waze_app_dataset_limpios$activity_days, main="activity_days")
+boxplot(waze_app_dataset_limpios$driven_km_drives, main="driven_km_drives")
+
+
+```
+## Tratar datos atipicos
+
+```{r tratardatosoulayers}
+
+
+
+
+adjust_outliers <- function(data, column_name) {
+    
+    x <- data[[column_name]]
+    qnt <- quantile(x, probs=c(.25, .75), na.rm = TRUE)
+    caps <- quantile(x, probs=c(.05, .95), na.rm = TRUE)
+    H <- 1.5 * IQR(x, na.rm = TRUE)
+    x[x < (qnt[1] - H)] <- caps[1]
+    x[x > (qnt[2] + H)] <- caps[2]
+    data[[column_name]] <- x
+    return(data)
+}
+
+# Ajustar outliers en la columna 'driven_km_drives'
+waze_app_dataset_limpios <- adjust_outliers(waze_app_dataset_limpios, "driven_km_drives")
+waze_app_dataset_limpios <- adjust_outliers(waze_app_dataset_limpios, "sessions")
+
+boxplot(waze_app_dataset_limpios$driven_km_drives, main="driven_km_drives")
+boxplot(waze_app_dataset_limpios$sessions , main="sessions")
+
+```
+## Escalado de los datos 
+```{r transformaciones}
+library(dplyr)
+library(tidyr)
+waze_app_dataset_limpios
+waze_app_dataset_limpios$driven_km_drives_scaled <- scale(waze_app_dataset_limpios$driven_km_drives)
+waze_app_dataset_limpios
+# Medidas de tendencia central y dispersión para variables numéricas
+waze_app_dataset_limpios %>%
+  summarise(across(where(is.numeric), list(media = ~mean(.), mediana = ~median(.), desviacion = ~sd(.))))
+
+
+```
+# Análisis descriptivo
+
+## Variables numericas
+```{r Numericas}
+library(dplyr)
+library(tidyr)
+
+# Medidas de tendencia central y dispersión para variables numéricas
+waze_app_dataset_limpios %>%
+  summarise(across(where(is.numeric), list(media = ~mean(.), mediana = ~median(.), desviacion = ~sd(.))))
+
+```
+## Variables categóricas
+```{r Categoricas}
+library(dplyr)
+library(tidyr)
+
+
+# Análisis descriptivo para variables categóricas
+summary(factor(waze_app_dataset_limpios$device))
+summary(factor(waze_app_dataset_limpios$label))
+
+
+
+
+
+```
+## Visualización de datos
+
+```{r Visualizacion}
+library(ggplot2)
+
+
+ggplot(waze_app_dataset_limpios, aes(x=device, y=sessions)) +
+  geom_boxplot(fill="lightblue", color="darkblue") +
+  labs(title="Número de Sesiones por Tipo de Dispositivo",
+       x="Tipo de Dispositivo",
+       y="Número de Sesiones") +
+  theme_minimal()
+
+
+
+
+
+
+
+
+
+
+
+
+
+ggplot(waze_app_dataset_limpios, aes(x=driven_km_drives, y=sessions)) +
+  geom_point(alpha=0.5) +
+  labs(title="Relación entre Kilómetros Conducidos y Sesiones",
+       x="Kilómetros Conducidos",
+       y="Número de Sesiones") +
+  theme_minimal()
+
+ggplot(waze_app_dataset_limpios, aes(x=activity_days, fill=label)) +
+  geom_density(alpha=0.5) +
+  labs(title="Distribución de Días de Actividad por Retención de Usuarios",
+       x="Días de Actividad",
+       y="Densidad") +
+  scale_fill_manual(values=c("red", "green"), labels=c("Churned", "Retained")) +
+  theme_minimal()
+```
+#  Interpretaciones y conclusiones
+
+
+**¿Cómo afecta el tipo de dispositivo al número de sesiones de los usuarios?**
+
+
+El boxplot muestra que la mediana del número de sesiones para usuarios de iPhone parece ser ligeramente superior a la de los usuarios de Android, aunque ambos dispositivos muestran una amplia variabilidad en el número de sesiones.
+La dispersión en ambos dispositivos indica que, aunque la tendencia central es similar, existen usuarios en ambos extremos que usan la aplicación con frecuencias muy diferentes.
+
+La hipótesis inicial de que los usuarios de Android tienen más sesiones que aquellos con iPhone no se sostiene completamente; los resultados indican que los usuarios de iPhone podrían tener ligeramente más sesiones en promedio.
+
+**¿Existe una relación entre los kilómetros conducidos y el número de sesiones?**
+
+
+Se puede observar una distribución amplia sin una tendencia clara, indicando que no hay una relación lineal fuerte entre los kilómetros conducidos y el número de sesiones.
+Algunos usuarios con pocos kilómetros conducidos tienen un alto número de sesiones y viceversa, lo que podría indicar que otros factores (como el tipo de uso o necesidades individuales) influyen más en el número de sesiones que la distancia conducida sola.
+
+La hipótesis de que los usuarios que conducen más kilómetros tienen sesiones más frecuentes no se apoya fuertemente con estos datos. Sería bueno explorar otros factores que podrían influir en el número de sesiones.
