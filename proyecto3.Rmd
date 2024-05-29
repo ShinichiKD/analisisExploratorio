@@ -11,30 +11,24 @@ knitr::opts_chunk$set(echo = TRUE)
 
 
 #install.packages('tinytex')
-if (!require("tinytex")) {
-  install.packages('tinytex')
-  library(tinytex)
-}
 
+library(tinytex)
 
-
-# Verificar si la instalación fue exitosa
-tinytex:::is_tinytex()
 
 ```
 # Formulación de Preguntas e Hipótesis
 
 ## Preguntas de Investigación
 
-- **¿Cómo afecta el tipo de dispositivo al número de sesiones de los usuarios?**
-- **¿Existe una relación entre los kilómetros conducidos y el número de sesiones?**
-- **¿Los días de actividad afectan la retención de los usuarios?**
+- ¿Cómo afecta el tipo de dispositivo al número de sesiones de los usuarios?
+- ¿Existe una relación entre los kilómetros conducidos y el número de sesiones?
+- ¿Los días de actividad afectan la retención de los usuarios
 
 ## Hipótesis Relacionadas
 
-- **Usuarios con Android tienen más sesiones que aquellos con iPhone**
-- **Usuarios que conducen más kilómetros tienen sesiones más frecuentes.**
-- **Un mayor número de días de actividad conduce a una menor tasa de abandono.**
+- Usuarios con Android tienen más sesiones que aquellos con iPhone
+- Usuarios que conducen más kilómetros tienen sesiones más frecuentes.
+- Un mayor número de días de actividad conduce a una menor tasa de abandono.
 
 # Importación de datos
 Este dataset fue obtenido desde Kaggle (https://www.kaggle.com/datasets/raminhuseyn/wase-navigation-app-dataset?select=waze_app_dataset.csv) , luego fue re-subido a un repositorio de github para poder ser utilizado desde una URL directamente. 
