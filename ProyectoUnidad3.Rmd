@@ -1,0 +1,239 @@
+---
+title: "ProyectoUnidad3"
+output: html_document
+date: "2024-05-29"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tinytex)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(reshape2)
+library(corrplot)
+library(FactoMineR)
+library(factoextra)
+library(GGally)
+
+```
+
+# Importación de datos
+```{r importacion}
+
+library(readr)
+dataset <- read_csv("C:/Users/pablo/Desktop/Analisis/analisisExploratorio/dataset.csv", 
+    col_types = cols(Gender = col_factor(levels = c("1", 
+        "0")), Own_car = col_factor(levels = c("1", 
+        "0")), Own_property = col_factor(levels = c("1", 
+        "0")), Work_phone = col_factor(levels = c("1", 
+        "0")), Phone = col_factor(levels = c("1", 
+        "0")), Email = col_factor(levels = c("1", 
+        "0")), Unemployed = col_factor(levels = c("1", 
+        "0")), Num_children = col_integer(), 
+        Num_family = col_integer(), Account_length = col_integer(), 
+        Total_income = col_double(), Income_type = col_factor(levels = c("Working", 
+            "Commercial associate", "Pensioner", 
+            "State servant", "Student")), 
+        Education_type = col_factor(levels = c("Secondary / secondary special", 
+            "Higher education", "Incomplete higher", 
+            "Lower secondary", "Academic degree")), 
+        Family_status = col_factor(levels = c("Married", 
+            "Single / not married", "Civil marriage", 
+            "Separated", "Widow")), Housing_type = col_factor(levels = c("House / apartment", 
+            "With parents", "Municipal apartment", 
+            "Rented apartment", "Office apartment")), 
+        Occupation_type = col_character(), 
+        Target = col_factor(levels = c("1", 
+            "0"))))
+dataset <- dataset %>% select(-ID)
+dataset$Occupation_type <- as.factor(dataset$Occupation_type)
+dataset$Housing_type <- as.factor(dataset$Housing_type)
+summary(dataset)
+
+```
+# Acerca del dataset
+### Variables presentes
+
+# Limpieza de Datos
+
+### Datos faltantes
+```{r datosfaltantes}
+na_counts <- colSums(is.na(dataset))
+print(na_counts)
+
+totalFaltantes<-sum(is.na(dataset))
+
+numero_de_filas <- nrow(dataset)
+porcentaje_faltantes <- (totalFaltantes / numero_de_filas) * 100
+porcentaje_faltantes
+
+
+```
+
+### Manejo de datos faltantes
+```{r manejo}
+dataset <- na.omit(dataset)
+
+na_counts <- colSums(is.na(dataset))
+print(na_counts)
+```
+### Detectar datos atipicos
+
+```{r atipicos}
+
+boxplot(dataset$Num_children, main = "Numero de hijos", ylab = "Valores", col = "blue")
+boxplot(dataset$Num_family, main = "Numero de familiares", ylab = "Valores", col = "red")
+boxplot(dataset$Account_length, main = "Duracion cuenta", ylab = "Valores", col = "green")
+boxplot(dataset$Total_income, main = "Ingresos", ylab = "Valores", col = "orange")
+boxplot(dataset$Age, main = "Edad", ylab = "Valores", col = "purple")
+boxplot(dataset$Years_employed, main = "Años trabajando", ylab = "Valores", col = "yellow")
+
+```
+
+
+### Manejar datos atipicos
+  
+
+
+
+```{r manejoatipicos}
+remove_outliers <- function(data, column_name) {
+  require(dplyr)
+
+  bounds <- data %>%
+    summarise(
+      upper_bound = quantile(.data[[column_name]], 0.99) + 1.5 * IQR(.data[[column_name]])
+    )
+    
+  filtered_data <- data %>%
+    filter(.data[[column_name]] <= bounds$upper_bound)
+    
+  return(filtered_data)
+}
+
+
+# Calcular percentiles para la variable 'Total_income'
+dataset <- remove_outliers(dataset,"Years_employed")
+dataset <- remove_outliers(dataset,"Num_children")
+dataset <- remove_outliers(dataset,"Num_family")
+dataset <- remove_outliers(dataset,"Total_income")
+
+
+boxplot(dataset$Num_children, main = "Numero de hijos", ylab = "Valores", col = "blue")
+boxplot(dataset$Num_family, main = "Numero de familiares", ylab = "Valores", col = "red")
+boxplot(dataset$Total_income, main = "Ingresos", ylab = "Valores", col = "orange")
+boxplot(dataset$Years_employed, main = "Años trabajando", ylab = "Valores", col = "yellow")
+
+
+
+
+```
+# Análisis descriptivo
+```{r descriptivo} 
+analyze_data <- function(df) {
+  cat("Análisis para Variables Numéricas:\n")
+  
+  print(summary(df[sapply(df, is.numeric)]))
+  print("Desviación estandar")
+  print(sapply(df[sapply(df, is.numeric)], sd))
+  
+  
+}
+
+# Ejecutar la función de análisis
+analyze_data(dataset)
+analyze_categorical <- function(df) {
+  cat_columns <- sapply(df, is.factor)  # Encuentra columnas categóricas
+  results <- lapply(names(df)[cat_columns], function(col) {
+    cat(sprintf("\nAnálisis de la columna: %s\n", col))
+    
+    frecuencias <- table(df[[col]])
+    proporciones <- prop.table(frecuencias) * 100
+    print("Conteos")
+    print(frecuencias)
+    
+    print(proporciones)
+    df_frecuencias <- as.data.frame(frecuencias)
+    p <- ggplot(df_frecuencias, aes_string(x = "Var1", y = "Freq", fill = "Var1")) +
+         geom_bar(stat = "identity") +
+         labs(title = sprintf("Distribución de %s", col), x = col, y = "Frecuencia") +
+         theme_minimal()+
+      theme(axis.text.x = element_text(angle = 45, hjust = 1))
+    print(p)
+  })
+}
+analyze_categorical(dataset)
+```
+
+# Formulación de Preguntas e Hipótesis
+## Pregunta 1
+- ¿Cuáles son los factores más relevantes que determinan la elegibilidad de una persona para obtener una tarjeta de crédito?
+- Hipótesis: Los factores más influyentes en la determinación de la elegibilidad para una tarjeta de crédito son el ingreso total, los años de empleo y la posesión de propiedad. 
+```{r pregunta1}
+
+numerics <- sapply(dataset, is.numeric)
+data_corr <- dataset[, numerics]
+
+# Calcular matriz de correlación
+cor_matrix <- cor(data_corr, use = "complete.obs")
+
+# Graficar el mapa de calor de correlaciones
+corrplot(cor_matrix, method = "color")
+
+```
+### Interpretaciones
+La correlación fuerte entre 'Num_children' y 'Num_family' es lo esperado, dado que el número de hijos es un componente directo del tamaño de la familia. Esto sugiere que los datos están coherentes en este aspecto y refleja una consistencia en la estructura familiar de los solicitantes.Total_income' muestra poca o ninguna correlación significativa con 'Age' y 'Years_employed', lo que indica que el ingreso total de los individuos no depende directamente de su edad o de la duración de su empleo en estos datos. Esto puede sugerir que otros factores, posiblemente el tipo de trabajo, la educación o el sector de empleo, pueden ser más determinantes para el ingreso que simplemente la edad o los años de servicio.
+### Conclusiones
+La falta de correlaciones fuertes entre variables claves y la variable objetivo sugiere que la elegibilidad para la tarjeta de crédito es probablemente el resultado de una combinación de múltiples factores. Estos resultados destacan la importancia de realizar análisis más profundos y quizás la inclusión de más variables o la exploración de modelos estadísticos más sofisticados para capturar la verdadera naturaleza de las relaciones en los datos.
+
+### Pregunta 2
+- ¿Es posible establecer perfiles de solicitantes basados en las características presentes en el dataset? 
+- Hipótesis: Los solicitantes se pueden clasificar en distintos perfiles basados en sus características
+```{r pregunta2}
+result_pca <- PCA(dataset[, sapply(dataset, is.numeric)], graph = FALSE)
+
+fviz_pca_biplot(result_pca, label="var", habillage=dataset$Target,
+               addEllipses=TRUE, ellipse.level=0.95)
+table_data <- table(dataset$Education_type, dataset$Housing_type)
+
+fviz_pca_var(result_pca, col.var="steelblue")+
+ theme_minimal()
+
+fviz_pca_var(result_pca, col.var="contrib")+
+ scale_color_gradient2(low="white", mid="blue",
+           high="red", midpoint=96) +
+ theme_minimal()
+
+```
+
+### Interpretaciones
+La superposición de los grupos en el biplot (grupos 0 y 1) indica que, aunque hay diferencias en cómo las variables contribuyen a los componentes principales, estos no son suficientemente distintivos para separar completamente a los solicitantes en grupos claramente definidos basados en los componentes analizados.
+Las variables 'Years_employed', 'Total_income' y 'Account_length' están fuertemente alineadas en la misma dirección sobre el primer eje principal (Dim1), lo que indica que estas variables, que probablemente reflejan la estabilidad económica y la experiencia laboral, están correlacionadas positivamente entre sí.
+
+### Conclusiones
+Aunque los datos no muestran una separación clara de los grupos en las dos primeras componentes principales, la orientación y contribución de las variables sugieren que es posible que ciertos factores, como la estabilidad financiera (ingresos y años empleados) y la estructura familiar (número de miembros de la familia), jueguen roles importantes en diferenciar subgrupos dentro del conjunto de datos.
+
+### Pregunta 3
+- ¿Es posible predecir si una persona es elegible para una tarjeta de crédito?
+- Hipótesis: Utilizando un modelo predictivo es posible predecir si un solicitante será aprobado para una tarjeta de crédito.
+```{r pregunta3}
+
+
+
+ggpairs(dataset, columns = c("Age", "Total_income", "Years_employed","Num_children","Account_length","Num_family"), 
+        aes(color = Target),upper = list(continuous = "points"))+
+      theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+```
+
+### Interpretaciones
+La distribución de edad parece ser relativamente uniforme entre los aprobados y no aprobados, lo que sugiere que la edad por sí sola puede no ser un factor decisivo.Similar al ingreso total, los años empleados parecen concentrarse en valores bajos para ambos grupos, pero con algunos aprobados mostrando años de empleo más altos.
+Hay una agrupación notable de puntos en los rangos bajos de ambos, con pocos datos que muestren altos ingresos y alta estabilidad laboral, aunque estos últimos parecen estar más probablemente asociados con aprobaciones.
+
+### Conclusiones
+
+El análisis muestra que no hay una única variable que pueda predecir de manera confiable el resultado de la solicitud de crédito. Esto indica la complejidad del proceso de toma de decisiones que probablemente involucra múltiples factores y posiblemente interacciones complejas entre estas variables.
+
+
+

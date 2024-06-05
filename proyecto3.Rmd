@@ -1,8 +1,8 @@
 ---
 title: "ProyectoUnidad3"
 output:
-  pdf_document: default
   html_document: default
+  pdf_document: default
 date: "2024-05-27"
 ---
 
@@ -13,61 +13,81 @@ knitr::opts_chunk$set(echo = TRUE)
 #install.packages('tinytex')
 
 library(tinytex)
-
+library(dplyr)
+library(tidyr)
+library(ggplot2)
 
 ```
-# Formulación de Preguntas e Hipótesis
 
-## Preguntas de Investigación
-
-- ¿Cómo afecta el tipo de dispositivo al número de sesiones de los usuarios?
-- ¿Existe una relación entre los kilómetros conducidos y el número de sesiones?
-- ¿Los días de actividad afectan la retención de los usuarios
-
-## Hipótesis Relacionadas
-
-- Usuarios con Android tienen más sesiones que aquellos con iPhone
-- Usuarios que conducen más kilómetros tienen sesiones más frecuentes.
-- Un mayor número de días de actividad conduce a una menor tasa de abandono.
 
 # Importación de datos
-Este dataset fue obtenido desde Kaggle (https://www.kaggle.com/datasets/raminhuseyn/wase-navigation-app-dataset?select=waze_app_dataset.csv) , luego fue re-subido a un repositorio de github para poder ser utilizado desde una URL directamente. 
-
+Este dataset fue obtenido desde Kaggle (https://www.kaggle.com/datasets/bhavikjikadara/mental-health-dataset)
 
 
 ```{r lecturadatos}
 library(readr)
-url <- "https://raw.githubusercontent.com/ShinichiKD/analisisExploratorio/main/waze_app_dataset.csv"
-waze_app_dataset <- read_csv(url, 
-    col_names = TRUE, col_types = cols(label = col_factor(levels = c("retained", 
-        "churned")), device = col_factor(levels = c("Android", 
-        "iPhone"))), skip = 0)
-head(waze_app_dataset)
-str(waze_app_dataset)
+Mental_Health_Dataset <- read_csv("C:/Users/pablo/Desktop/Mental Health Dataset.csv", 
+    col_types = cols(self_employed = col_factor(levels = c("Yes", 
+        "No")), family_history = col_factor(levels = c("Yes", 
+        "No")), treatment = col_factor(levels = c("Yes", 
+        "No")), Growing_Stress = col_factor(levels = c("Yes", 
+        "No")), Changes_Habits = col_factor(levels = c("Yes", 
+        "No")), Mental_Health_History = col_factor(levels = c("Yes", 
+        "No","Maybe")), Coping_Struggles = col_factor(levels = c("Yes", 
+        "No")), Work_Interest = col_factor(levels = c("Yes", 
+        "No","Maybe")), Social_Weakness = col_factor(levels = c("Yes", 
+        "No","Maybe")), mental_health_interview = col_factor(levels = c("Yes", 
+        "No","Maybe")), care_options = col_factor(levels = c("Yes", 
+        "No","Not sure")), Mood_Swings = col_factor(levels = c("Medium", 
+        "Low","High")), Gender = col_factor(levels = c("Male", 
+        "Female")), Occupation = col_factor(levels = c("Housewife", 
+        "Student","Corporate","Others","Business")), Country = col_factor(levels = c("United States", 
+        "United Kingdom","Canada","Australia","Netherlands","Ireland","Germany","Sweden","India","France","Brazil","South Africa","New Zealand","Switzerland","Israel","Italy","Poland","Belgium","Russia","Singapore","Denmark","Greece","Portugal","Costa Rica","Finland","Bosnia and Herzegovina","Nigeria","Croatia","Thailand","Mexico","Moldova","Colombia","Georgia","Czech Republic","Philippines"))))
+
+
+
+
 ```
 
 
 
 # Acerca del dataset
 
-El conjunto de datos ofrece una visión completa de las interacciones de los usuarios dentro de la aplicación de navegación Waze, crucial para comprender y mitigar la pérdida de usuarios.
+El conjunto de datos que busca explorar el panorama del bienestar mental
 
 ## Variables presentes
+- **Marca de tiempo** : un registro de una fecha y hora determinadas. Esto podría ocurrir cuando se registró una observación o un dato sobre la salud mental de alguien.
 
+- **Género**: La clasificación de una persona como hombre o mujer.
 
-- **ID** Identificador único para cada usuario.
-- **label** Etiqueta que indica el estado de abandono de usuarios (p. ej., abandonado, retenido).
-- **sessions** Número de sesiones registradas por el usuario.
-- **drives** Número de unidades completadas por el usuario.
-- **total_sessions** Número total de sesiones registradas para el usuario.
-- **n_days_after_onboarding** Número de días desde la incorporación del usuario.
-- **total_navigations_fav1** Número total de navegaciones por ruta favorita 1.
-- **total_navigations_fav2** Número total de navegaciones por ruta favorita 2.
-- **driven_km_drives** Distancia total recorrida por el usuario en kilómetros.
-- **duration_minutes_drives** Duración total de los recorridos en minutos.
-- **activity_days** Número de días con actividad de usuario registrada.
-- **driving_days** Número de días con actividad de conducción registrada.
-- **device** Dispositivo utilizado por el usuario para la navegación (p. ej., teléfono inteligente, tableta).
+- **País**: El lugar donde vive una persona. Esto es relevante porque los recursos de salud mental y las actitudes culturales hacia la salud mental pueden variar según el país.
+
+- **Ocupación**: Trabajo o negocio habitual o principal de una persona. La ocupación puede influir en los niveles de estrés y el acceso a recursos de salud mental.
+
+- **Trabajador por cuenta propia**: Indica si una persona trabaja por cuenta propia o tiene su propio negocio, en lugar de trabajar para un empleador.
+
+- **Historia familiar**: Un registro de las relaciones entre los miembros de la familia junto con sus antecedentes médicos. Los antecedentes familiares de problemas de salud mental pueden indicar posibles factores genéticos o ambientales.
+
+- **Tratamiento**: Indica si una persona está actualmente en tratamiento por problemas de salud mental.
+
+- **Estrés creciente**: indica si el nivel de estrés de una persona aumenta con el tiempo.
+
+- **Cambios de Hábitos**: Esto parece incompleto. Podría referirse a cambios de comportamiento o hábitos que pueden indicar cambios en la salud mental.
+
+- **Mental_Health_History**: un registro del historial de salud mental de una persona, incluido cualquier diagnóstico o tratamiento previo.
+
+- **Mood_Swings**: Fluctuaciones en el estado de ánimo de una persona, que pueden ser indicativas de diversas afecciones de salud mental.
+
+- **Luchas_de_afrontamiento**: dificultades que una persona puede tener para afrontar factores estresantes o problemas de salud mental.
+
+- **Work_Interest**: Nivel de interés o participación en el trabajo o actividades, que puede verse afectado por la salud mental.
+
+- **Debilidad_social**: Debilidades o dificultades en las interacciones o relaciones sociales, que pueden verse afectadas por problemas de salud mental.
+
+- **Entrevista_salud_mental**: Parece que esto podría referirse a una entrevista estructurada o evaluación relacionada con la salud mental.
+
+- **Care_Options** : opciones disponibles para buscar atención o tratamiento para problemas de salud mental, como terapia, medicamentos o grupos de apoyo.
+
 
 # Limpieza de Datos
 
@@ -75,167 +95,133 @@ El conjunto de datos ofrece una visión completa de las interacciones de los usu
 
 
 ```{r datosfaltantes}
+summary(Mental_Health_Dataset)
+Mental_Health_Dataset <- Mental_Health_Dataset %>% select(-Growing_Stress)
+Mental_Health_Dataset <- Mental_Health_Dataset %>% select(-Changes_Habits)
+Mental_Health_Dataset <- Mental_Health_Dataset %>% select(-Timestamp)
+totalFaltantes<-sum(is.na(Mental_Health_Dataset))
 
-
-
-totalFaltantes<-sum(is.na(waze_app_dataset))
-
-numero_de_filas <- nrow(waze_app_dataset)
+numero_de_filas <- nrow(Mental_Health_Dataset)
 porcentaje_faltantes <- (totalFaltantes / numero_de_filas) * 100
-summary(waze_app_dataset)
+summary(Mental_Health_Dataset)
 ```
 
 ## Manejo de datos faltantes
-En el análisis se encontró que tenemos un total de `r totalFaltantes` de datos faltantes, además observando el resumen , podemos ver que  todos corresponden a la columna "label", obteniendo un  `r porcentaje_faltantes`% de datos faltantes en el dataset. Esta cantidad de datos no es significativa , por lo tanto estas filas seran eliminadas.
-
-
-```{r manejodatosfaltantes}
+En el análisis se encontró que tenemos un total de `r totalFaltantes` de datos faltantes, además observando el resumen , podemos ver que  todos corresponden a la columna "self_employed", obteniendo un  `r porcentaje_faltantes`% de datos faltantes en el dataset. Esta cantidad de datos no es significativa , por lo tanto estas filas seran eliminadas.
 
 
 
-waze_app_dataset_limpios <- na.omit(waze_app_dataset)
-summary(waze_app_dataset_limpios)
-
-
-
-
+```{r manejofaltantes}
+Mental_Health_Dataset <- na.omit(Mental_Health_Dataset)
+summary(Mental_Health_Dataset)
 
 ```
+
+
+
+
 ## Detectar datos atipicos
+En este caso la mayoria de los datos son de tipo categorico, por lo tanto no se buscaran datos atipicos por el momento.
 
+# Análisis descriptivo
+Como se menciono anteriormente solo se existen datos categoricos , por lo tanto se va a realizar un análisis descriptivo para las variables categóricas
+```{r analisis}
+categoricals <- Mental_Health_Dataset %>% select(where(is.factor))
+library(summarytools)
 
-```{r oulayers}
-
-
-
-boxplot(waze_app_dataset_limpios$sessions, main="sessions")
-boxplot(waze_app_dataset_limpios$activity_days, main="activity_days")
-boxplot(waze_app_dataset_limpios$driven_km_drives, main="driven_km_drives")
-
-
-```
-## Tratar datos atipicos
-
-```{r tratardatosoulayers}
-
-
-
-
-adjust_outliers <- function(data, column_name) {
-    
-    x <- data[[column_name]]
-    qnt <- quantile(x, probs=c(.25, .75), na.rm = TRUE)
-    caps <- quantile(x, probs=c(.05, .95), na.rm = TRUE)
-    H <- 1.5 * IQR(x, na.rm = TRUE)
-    x[x < (qnt[1] - H)] <- caps[1]
-    x[x > (qnt[2] + H)] <- caps[2]
-    data[[column_name]] <- x
-    return(data)
+# Aplicar freq() a las columnas categóricas
+for (col in names(categoricals)) {
+  print(freq(Mental_Health_Dataset[[col]]))
 }
 
-# Ajustar outliers en la columna 'driven_km_drives'
-waze_app_dataset_limpios <- adjust_outliers(waze_app_dataset_limpios, "driven_km_drives")
-waze_app_dataset_limpios <- adjust_outliers(waze_app_dataset_limpios, "sessions")
-
-boxplot(waze_app_dataset_limpios$driven_km_drives, main="driven_km_drives")
-boxplot(waze_app_dataset_limpios$sessions , main="sessions")
-
 ```
-## Escalado de los datos 
+
+## Realizar transformaciones 
 ```{r transformaciones}
-library(dplyr)
-library(tidyr)
-waze_app_dataset_limpios
-waze_app_dataset_limpios$driven_km_drives_scaled <- scale(waze_app_dataset_limpios$driven_km_drives)
-waze_app_dataset_limpios
-# Medidas de tendencia central y dispersión para variables numéricas
-waze_app_dataset_limpios %>%
-  summarise(across(where(is.numeric), list(media = ~mean(.), mediana = ~median(.), desviacion = ~sd(.))))
+ 
 
 
-```
-# Análisis descriptivo
+factores <- Mental_Health_Dataset %>%
+  select(where(is.factor))
+Mental_Health_DatasetNumericos <- factores %>% 
+  mutate(across(everything(), as.integer))
 
-## Variables numericas
-```{r Numericas}
-library(dplyr)
-library(tidyr)
-
-# Medidas de tendencia central y dispersión para variables numéricas
-waze_app_dataset_limpios %>%
-  summarise(across(where(is.numeric), list(media = ~mean(.), mediana = ~median(.), desviacion = ~sd(.))))
-
-```
-## Variables categóricas
-```{r Categoricas}
-library(dplyr)
-library(tidyr)
-
-
-# Análisis descriptivo para variables categóricas
-summary(factor(waze_app_dataset_limpios$device))
-summary(factor(waze_app_dataset_limpios$label))
-
-
+Mental_Health_DatasetNumericos
 
 
 
 ```
+
 ## Visualización de datos
 
-```{r Visualizacion}
-library(ggplot2)
-
-
-ggplot(waze_app_dataset_limpios, aes(x=device, y=sessions)) +
-  geom_boxplot(fill="lightblue", color="darkblue") +
-  labs(title="Número de Sesiones por Tipo de Dispositivo",
-       x="Tipo de Dispositivo",
-       y="Número de Sesiones") +
-  theme_minimal()
 
 
 
 
-
-
-
-
-
-
-
-
-
-ggplot(waze_app_dataset_limpios, aes(x=driven_km_drives, y=sessions)) +
-  geom_point(alpha=0.5) +
-  labs(title="Relación entre Kilómetros Conducidos y Sesiones",
-       x="Kilómetros Conducidos",
-       y="Número de Sesiones") +
-  theme_minimal()
-
-ggplot(waze_app_dataset_limpios, aes(x=activity_days, fill=label)) +
-  geom_density(alpha=0.5) +
-  labs(title="Distribución de Días de Actividad por Retención de Usuarios",
-       x="Días de Actividad",
-       y="Densidad") +
-  scale_fill_manual(values=c("red", "green"), labels=c("Churned", "Retained")) +
-  theme_minimal()
-```
 #  Interpretaciones y conclusiones
 
 
-**¿Cómo afecta el tipo de dispositivo al número de sesiones de los usuarios?**
+- ¿Cuáles son los factores más relevantes que determinan si una persona está en tratamiento para problemas de salud mental?
+ Hipótesis :Factores como el historial familiar de problemas de salud mental y la ocupación están significativamente asociados  en que un individuo este en tratamiento.
+
+- ¿Qué factores están relacionados con que una persona tenga debilidades sociales?
+Hipótesis : Factores como el estrés elevado y antecedentes de problemas de salud mental están significativamente relacionados con las debilidades sociales.
+
+- ¿ Es posible predecir el nivel de cambio de "Mood_Swings"? ("Medium"/"Low"/"High")
+Hipótesis : Se puede predecir los niveles de Mood_Swings de  una persona
 
 
-El boxplot muestra que la mediana del número de sesiones para usuarios de iPhone parece ser ligeramente superior a la de los usuarios de Android, aunque ambos dispositivos muestran una amplia variabilidad en el número de sesiones.
-La dispersión en ambos dispositivos indica que, aunque la tendencia central es similar, existen usuarios en ambos extremos que usan la aplicación con frecuencias muy diferentes.
-
-La hipótesis inicial de que los usuarios de Android tienen más sesiones que aquellos con iPhone no se sostiene completamente; los resultados indican que los usuarios de iPhone podrían tener ligeramente más sesiones en promedio.
-
-**¿Existe una relación entre los kilómetros conducidos y el número de sesiones?**
+```{r graficos }
+ 
 
 
-Se puede observar una distribución amplia sin una tendencia clara, indicando que no hay una relación lineal fuerte entre los kilómetros conducidos y el número de sesiones.
-Algunos usuarios con pocos kilómetros conducidos tienen un alto número de sesiones y viceversa, lo que podría indicar que otros factores (como el tipo de uso o necesidades individuales) influyen más en el número de sesiones que la distancia conducida sola.
 
-La hipótesis de que los usuarios que conducen más kilómetros tienen sesiones más frecuentes no se apoya fuertemente con estos datos. Sería bueno explorar otros factores que podrían influir en el número de sesiones.
+
+
+
+ggplot(Mental_Health_Dataset, aes(x = Occupation, fill = treatment)) +
+  geom_bar(position = "dodge") +
+  labs(title = "Problemas de Salud Mental por Ocupación",
+       x = "Ocupación", y = "Conteo") +
+  theme_minimal()
+ggplot(Mental_Health_Dataset, aes(x = family_history, fill = treatment)) +
+  geom_bar(position = "dodge") +
+  labs(title = "Problemas de Salud Mental por historial familiar",
+       x = "family_history", y = "Conteo") +
+  theme_minimal()
+ggplot(Mental_Health_Dataset, aes(x = Work_Interest, fill = treatment)) +
+  geom_bar(position = "dodge") +
+  labs(title = "Work_Interest",
+       x = "Work_Interest", y = "Conteo") +
+  theme_minimal()
+
+ggplot(Mental_Health_Dataset, aes(x = Work_Interest, fill = Social_Weakness)) +
+  geom_bar(position = "fill") +
+  facet_wrap(~Mental_Health_History) +
+  labs(title = "Social_Weakness por Work_Interest y Mental_Health_History",
+       x = "Work_Interest",
+       y = "Mental_Health_History",
+       fill = "Social_Weakness") +
+  theme_minimal()
+
+ggplot(Mental_Health_Dataset, aes(x = treatment, fill = Mood_Swings)) +
+  geom_bar(position = "dodge") +
+  labs(title = "Mood_Swings por treatment ",
+       x = "treatment", y = "Conteo") +
+  theme_minimal()
+
+ggplot(Mental_Health_Dataset, aes(x = Occupation, fill = Mood_Swings)) +
+  geom_bar(position = "dodge") +
+  labs(title = "Mood_Swings por Occupation ",
+       x = "Occupation", y = "Conteo") +
+  theme_minimal()
+
+ggplot(Mental_Health_Dataset, aes(x = Mental_Health_History, fill = Mood_Swings)) +
+  geom_bar(position = "dodge") +
+  labs(title = "Mood_Swings por Mental_Health_History ",
+       x = "Mental_Health_History", y = "Conteo") +
+  theme_minimal()
+
+
+
+```
