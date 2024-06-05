@@ -358,7 +358,7 @@ display: none;
 <div id="importación-de-datos" class="section level1">
 <h1>Importación de datos</h1>
 <pre class="r"><code>library(readr)
-dataset &lt;- read_csv(&quot;C:/Users/pablo/Desktop/Analisis/analisisExploratorio/dataset.csv&quot;, 
+dataset &lt;- read_csv(&quot;C:/Users/pablo/Desktop/analisisExploratorio/dataset.csv&quot;, 
     col_types = cols(Gender = col_factor(levels = c(&quot;1&quot;, 
         &quot;0&quot;)), Own_car = col_factor(levels = c(&quot;1&quot;, 
         &quot;0&quot;)), Own_property = col_factor(levels = c(&quot;1&quot;, 
@@ -435,10 +435,47 @@ summary(dataset)</code></pre>
 <h1>Acerca del dataset</h1>
 <div id="variables-presentes" class="section level3">
 <h3>Variables presentes</h3>
+<ul>
+<li><strong>ID</strong>: Un identificador para cada individuo
+(cliente).</li>
+<li><strong>Gender</strong>: El género del individuo.</li>
+<li><strong>Own_car</strong>: Una característica binaria que indica si
+el individuo posee un automóvil.</li>
+<li><strong>Own_property</strong>: Una característica binaria que indica
+si el individuo posee una propiedad.</li>
+<li><strong>Work_phone</strong>: Una característica binaria que indica
+si el individuo tiene un teléfono de trabajo.</li>
+<li><strong>Phone</strong>: Una característica binaria que indica si el
+individuo tiene un teléfono.</li>
+<li><strong>Email</strong>: Una característica binaria que indica si el
+individuo ha proporcionado una dirección de correo electrónico.</li>
+<li><strong>Unemployed</strong>: Una característica binaria que indica
+si el individuo está desempleado.</li>
+<li><strong>Num_children</strong>: El número de hijos que tiene el
+individuo.</li>
+<li><strong>Num_family</strong>: El número total de miembros de la
+familia.</li>
+<li><strong>Account_length</strong>: La duración de la cuenta del
+individuo con un banco o institución financiera.</li>
+<li><strong>Total_income</strong>: El ingreso total del individuo.</li>
+<li><strong>Age</strong> : La edad del individuo.</li>
+<li><strong>Years_employed</strong>: El número de años que el individuo
+ha estado empleado.</li>
+<li><strong>Income_type</strong>: El tipo de ingreso (por ejemplo,
+empleado, autónomo, etc.).</li>
+<li><strong>Education_type</strong>: El nivel educativo del
+individuo.</li>
+<li><strong>Family_status</strong>: El estado familiar del
+individuo.</li>
+<li><strong>Housing_type</strong>: El tipo de vivienda en la que vive el
+individuo.</li>
+<li><strong>Occupation_type</strong>: El tipo de ocupación en la que
+está involucrado el individuo.</li>
+<li><strong>Target</strong>: Indica si el individuo es elegible para una
+tarjeta de crédito o no (por ejemplo, Sí/No, 1/0). # Limpieza de
+Datos</li>
+</ul>
 </div>
-</div>
-<div id="limpieza-de-datos" class="section level1">
-<h1>Limpieza de Datos</h1>
 <div id="datos-faltantes" class="section level3">
 <h3>Datos faltantes</h3>
 <pre class="r"><code>na_counts &lt;- colSums(is.na(dataset))

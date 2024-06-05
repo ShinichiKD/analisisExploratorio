@@ -22,7 +22,7 @@ library(GGally)
 ```{r importacion}
 
 library(readr)
-dataset <- read_csv("C:/Users/pablo/Desktop/Analisis/analisisExploratorio/dataset.csv", 
+dataset <- read_csv("C:/Users/pablo/Desktop/analisisExploratorio/dataset.csv", 
     col_types = cols(Gender = col_factor(levels = c("1", 
         "0")), Own_car = col_factor(levels = c("1", 
         "0")), Own_property = col_factor(levels = c("1", 
@@ -53,8 +53,28 @@ summary(dataset)
 
 ```
 # Acerca del dataset
+Este es el Conjunto de Datos de Elegibilidad para Tarjetas de Crédito. Involucra varios factores que determinan o influyen en la elegibilidad de una persona para una tarjeta de crédito. Desde variables demográficas como el género y el estado de empleo, hasta el número de hijos, el tamaño de la familia, el ingreso total, la educación, la ocupación y más allá, este conjunto de datos comprende la naturaleza multifacética de la evaluación para una tarjeta de crédito. Todos estos factores son necesarios para determinar la solvencia crediticia y la elegibilidad para una tarjeta de crédito.
 ### Variables presentes
-
+- **ID**:	Un identificador para cada individuo (cliente).
+- **Gender**:	El género del individuo.
+- **Own_car**:	Una característica binaria que indica si el individuo posee un automóvil.
+- **Own_property**:	Una característica binaria que indica si el individuo posee una propiedad.
+- **Work_phone**:	Una característica binaria que indica si el individuo tiene un teléfono de trabajo.
+- **Phone**:	Una característica binaria que indica si el individuo tiene un teléfono.
+- **Email**:	Una característica binaria que indica si el individuo ha proporcionado una dirección de correo electrónico.
+- **Unemployed**:	Una característica binaria que indica si el individuo está desempleado.
+- **Num_children**:	El número de hijos que tiene el individuo.
+- **Num_family**:	El número total de miembros de la familia.
+- **Account_length**:	La duración de la cuenta del individuo con un banco o institución financiera.
+- **Total_income**:	El ingreso total del individuo.
+- **Age** :	La edad del individuo.
+- **Years_employed**:	El número de años que el individuo ha estado empleado.
+- **Income_type**:	El tipo de ingreso (por ejemplo, empleado, autónomo, etc.).
+- **Education_type**:	El nivel educativo del individuo.
+- **Family_status**:	El estado familiar del individuo.
+- **Housing_type**:	El tipo de vivienda en la que vive el individuo.
+- **Occupation_type**:	El tipo de ocupación en la que está involucrado el individuo.
+- **Target**:	Indica si el individuo es elegible para una tarjeta de crédito o no (por ejemplo, Sí/No, 1/0).
 # Limpieza de Datos
 
 ### Datos faltantes
