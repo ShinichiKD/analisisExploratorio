@@ -1,6 +1,8 @@
 ---
 title: "ProyectoUnidad3"
-output: html_document
+output:
+  pdf_document: default
+  html_document: default
 date: "2024-05-29"
 ---
 
@@ -19,10 +21,11 @@ library(GGally)
 ```
 
 # Importación de datos
+Este dataset fue obtenido desde Kaggle (https://www.kaggle.com/datasets/rohit265/credit-card-eligibility-data-determining-factors) y luego fue re-subido a GitHub para poder ser obtenido desde cualquier parte y dispositivo.
 ```{r importacion}
 
 library(readr)
-dataset <- read_csv("C:/Users/pablo/Desktop/analisisExploratorio/dataset.csv", 
+dataset <- read_csv("https://raw.githubusercontent.com/ShinichiKD/analisisExploratorio/main/dataset.csv", 
     col_types = cols(Gender = col_factor(levels = c("1", 
         "0")), Own_car = col_factor(levels = c("1", 
         "0")), Own_property = col_factor(levels = c("1", 
@@ -54,7 +57,9 @@ summary(dataset)
 ```
 # Acerca del dataset
 Este es el Conjunto de Datos de Elegibilidad para Tarjetas de Crédito. Involucra varios factores que determinan o influyen en la elegibilidad de una persona para una tarjeta de crédito. Desde variables demográficas como el género y el estado de empleo, hasta el número de hijos, el tamaño de la familia, el ingreso total, la educación, la ocupación y más allá, este conjunto de datos comprende la naturaleza multifacética de la evaluación para una tarjeta de crédito. Todos estos factores son necesarios para determinar la solvencia crediticia y la elegibilidad para una tarjeta de crédito.
-### Variables presentes
+
+## Variables presentes
+
 - **ID**:	Un identificador para cada individuo (cliente).
 - **Gender**:	El género del individuo.
 - **Own_car**:	Una característica binaria que indica si el individuo posee un automóvil.
@@ -77,7 +82,9 @@ Este es el Conjunto de Datos de Elegibilidad para Tarjetas de Crédito. Involucr
 - **Target**:	Indica si el individuo es elegible para una tarjeta de crédito o no (por ejemplo, Sí/No, 1/0).
 # Limpieza de Datos
 
-### Datos faltantes
+## Datos faltantes
+
+Primero observaremos los datos faltantes para cada columna.
 ```{r datosfaltantes}
 na_counts <- colSums(is.na(dataset))
 print(na_counts)
@@ -86,19 +93,24 @@ totalFaltantes<-sum(is.na(dataset))
 
 numero_de_filas <- nrow(dataset)
 porcentaje_faltantes <- (totalFaltantes / numero_de_filas) * 100
-porcentaje_faltantes
+
 
 
 ```
+podemos observar que solamente Housing_type tiene datos faltantes, teniendo un `r porcentaje_faltantes` % de datos faltantes.
 
-### Manejo de datos faltantes
+## Manejo de datos faltantes
+
+Como existen un `r porcentaje_faltantes` % de datos faltantes, se eliminaran las filas.
 ```{r manejo}
 dataset <- na.omit(dataset)
 
 na_counts <- colSums(is.na(dataset))
 print(na_counts)
 ```
-### Detectar datos atipicos
+## Detectar datos atípicos
+
+Bloxplots de las variables numéricas con el objetivo de detectar datos atípicos.
 
 ```{r atipicos}
 
@@ -112,8 +124,8 @@ boxplot(dataset$Years_employed, main = "Años trabajando", ylab = "Valores", col
 ```
 
 
-### Manejar datos atipicos
-  
+## Manejar datos atípicos
+Luego de visualizados, se eliminarán los valores atípicos utilizando el percentil 99 y el rango intercuartílico (IQR) para definir un límite superior, y luego filtra los datos para mantener solo aquellos valores que están por debajo de este límite superior.
 
 
 
@@ -149,7 +161,34 @@ boxplot(dataset$Years_employed, main = "Años trabajando", ylab = "Valores", col
 
 
 ```
+
+## Realizar transformaciones
+
+- Codificación de Variables Categóricas: Se utilizará One-Hot Encoding, para convertir las variables categóricas en variables numéricas. 
+
+- Estandarización de Variables Continuas: Se utilizará estandarización, para que tengan una media de 0 y una desviación estándar de 1.
+
+```{r transformaciones}
+
+df_categorical <- dataset[, c("Gender", "Income_type", "Education_type", "Family_status", "Housing_type", "Occupation_type")]
+df_categorical <- model.matrix(~ . - 1, data = df_categorical)
+
+
+df_continuous <- dataset[, c("Total_income", "Age", "Years_employed", "Account_length")]
+df_continuous <- scale(df_continuous)
+
+
+df_binary <- dataset[, c("Own_car", "Own_property", "Work_phone", "Phone", "Email", "Unemployed")]
+
+
+df_prepared <- cbind(df_binary, df_continuous, df_categorical)
+
+head(df_prepared)
+
+```
 # Análisis descriptivo
+
+Ahora se realizará un análisis descriptivo de las variables numéricas y variables categóricas.
 ```{r descriptivo} 
 analyze_data <- function(df) {
   cat("Análisis para Variables Numéricas:\n")
@@ -172,10 +211,10 @@ analyze_categorical <- function(df) {
     proporciones <- prop.table(frecuencias) * 100
     print("Conteos")
     print(frecuencias)
-    
+    print("Proporción en %")
     print(proporciones)
     df_frecuencias <- as.data.frame(frecuencias)
-    p <- ggplot(df_frecuencias, aes_string(x = "Var1", y = "Freq", fill = "Var1")) +
+    p <- ggplot(df_frecuencias, aes(x = Var1, y = Freq, fill = Var1)) +
          geom_bar(stat = "identity") +
          labs(title = sprintf("Distribución de %s", col), x = col, y = "Frecuencia") +
          theme_minimal()+
@@ -186,8 +225,11 @@ analyze_categorical <- function(df) {
 analyze_categorical(dataset)
 ```
 
+
 # Formulación de Preguntas e Hipótesis
+
 ## Pregunta 1
+
 - ¿Cuáles son los factores más relevantes que determinan la elegibilidad de una persona para obtener una tarjeta de crédito?
 - Hipótesis: Los factores más influyentes en la determinación de la elegibilidad para una tarjeta de crédito son el ingreso total, los años de empleo y la posesión de propiedad. 
 ```{r pregunta1}
@@ -202,14 +244,20 @@ cor_matrix <- cor(data_corr, use = "complete.obs")
 corrplot(cor_matrix, method = "color")
 
 ```
-### Interpretaciones
+
+## Interpretaciones
+
 La correlación fuerte entre 'Num_children' y 'Num_family' es lo esperado, dado que el número de hijos es un componente directo del tamaño de la familia. Esto sugiere que los datos están coherentes en este aspecto y refleja una consistencia en la estructura familiar de los solicitantes.Total_income' muestra poca o ninguna correlación significativa con 'Age' y 'Years_employed', lo que indica que el ingreso total de los individuos no depende directamente de su edad o de la duración de su empleo en estos datos. Esto puede sugerir que otros factores, posiblemente el tipo de trabajo, la educación o el sector de empleo, pueden ser más determinantes para el ingreso que simplemente la edad o los años de servicio.
-### Conclusiones
+
+## Conclusiones
+
 La falta de correlaciones fuertes entre variables claves y la variable objetivo sugiere que la elegibilidad para la tarjeta de crédito es probablemente el resultado de una combinación de múltiples factores. Estos resultados destacan la importancia de realizar análisis más profundos y quizás la inclusión de más variables o la exploración de modelos estadísticos más sofisticados para capturar la verdadera naturaleza de las relaciones en los datos.
 
-### Pregunta 2
+## Pregunta 2
+
 - ¿Es posible establecer perfiles de solicitantes basados en las características presentes en el dataset? 
 - Hipótesis: Los solicitantes se pueden clasificar en distintos perfiles basados en sus características
+
 ```{r pregunta2}
 result_pca <- PCA(dataset[, sapply(dataset, is.numeric)], graph = FALSE)
 
@@ -227,14 +275,18 @@ fviz_pca_var(result_pca, col.var="contrib")+
 
 ```
 
-### Interpretaciones
+
+## Interpretaciones
+
 La superposición de los grupos en el biplot (grupos 0 y 1) indica que, aunque hay diferencias en cómo las variables contribuyen a los componentes principales, estos no son suficientemente distintivos para separar completamente a los solicitantes en grupos claramente definidos basados en los componentes analizados.
 Las variables 'Years_employed', 'Total_income' y 'Account_length' están fuertemente alineadas en la misma dirección sobre el primer eje principal (Dim1), lo que indica que estas variables, que probablemente reflejan la estabilidad económica y la experiencia laboral, están correlacionadas positivamente entre sí.
 
-### Conclusiones
+## Conclusiones
+
 Aunque los datos no muestran una separación clara de los grupos en las dos primeras componentes principales, la orientación y contribución de las variables sugieren que es posible que ciertos factores, como la estabilidad financiera (ingresos y años empleados) y la estructura familiar (número de miembros de la familia), jueguen roles importantes en diferenciar subgrupos dentro del conjunto de datos.
 
-### Pregunta 3
+## Pregunta 3
+
 - ¿Es posible predecir si una persona es elegible para una tarjeta de crédito?
 - Hipótesis: Utilizando un modelo predictivo es posible predecir si un solicitante será aprobado para una tarjeta de crédito.
 ```{r pregunta3}
@@ -247,13 +299,15 @@ ggpairs(dataset, columns = c("Age", "Total_income", "Years_employed","Num_childr
 
 ```
 
-### Interpretaciones
+
+## Interpretaciones
+
 La distribución de edad parece ser relativamente uniforme entre los aprobados y no aprobados, lo que sugiere que la edad por sí sola puede no ser un factor decisivo.Similar al ingreso total, los años empleados parecen concentrarse en valores bajos para ambos grupos, pero con algunos aprobados mostrando años de empleo más altos.
 Hay una agrupación notable de puntos en los rangos bajos de ambos, con pocos datos que muestren altos ingresos y alta estabilidad laboral, aunque estos últimos parecen estar más probablemente asociados con aprobaciones.
 
-### Conclusiones
+## Conclusiones
 
-El análisis muestra que no hay una única variable que pueda predecir de manera confiable el resultado de la solicitud de crédito. Esto indica la complejidad del proceso de toma de decisiones que probablemente involucra múltiples factores y posiblemente interacciones complejas entre estas variables.
+El análisis muestra que no hay una única variable que pueda predecir de manera confiable el resultado. Esto indica la complejidad del proceso de toma de decisiones que probablemente involucra múltiples factores y posiblemente interacciones complejas entre estas variables.
 
 
 
