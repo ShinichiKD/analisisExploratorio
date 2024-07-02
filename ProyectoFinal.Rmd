@@ -1,0 +1,195 @@
+---
+title: "ProyectoFinal"
+output:
+  pdf_document: default
+  html_document: default
+date: "2024-06-20"
+---
+```{r setup, include=FALSE}
+library(tinytex)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(reshape2)
+library(RColorBrewer)
+library(GGally)
+library(psych)
+library(corrplot)
+```
+
+# Conjunto de datos 
+
+## Conjunto seleccionado
+
+El conjunto de datos seleccionado es sobre cáncer de mama, este incluye información completa sobre pacientes diagnosticadas con cáncer de mama, que abarca datos demográficos, atributos del tumor (tamaño, tipo, ubicación) y resultados clínicos. 
+
+## Por qué se seleccionó este conjunto de datos
+La razón por la que se seleccionó este conjunto de datos es su importancia crucial en el campo de la medicina y la salud pública. Permite el desarrollo y la mejora de modelos predictivos que pueden ayudar a diagnosticar el cáncer de mama de manera más precisa y temprana, lo que puede llevar a tratamientos más oportunos y mejorar las tasas de supervivencia. Además, este conjunto de datos es particularmente interesante debido a su alto número de atributos, que permiten un análisis detallado.
+
+## Preguntas de investigación
+
+- ¿Cuáles son las características más influyentes para determinar si un tumor es maligno o benigno?
+- ¿Es posible desarrollar un modelo predictivo para el diagnóstico del cáncer de mama utilizando este conjunto de datos?
+- ¿Existen patrones o relaciones significativas entre las diferentes características del tumor y su diagnóstico?
+
+```{r cargardatos}
+library(readr)
+dataproyectofinal <- read_csv("C:/Users/pablo/Desktop/Analisis/analisisExploratorio/dataproyectofinal.csv", 
+    col_types = cols(id = col_integer(), 
+        diagnosis = col_factor(levels = c("M", 
+            "B"))))
+
+```
+
+# Limpieza y preparación de datos
+Primero realizaremos una revisión de los datos para tener más información al respecto
+```{r revision}
+#Primeros valores
+head(dataproyectofinal)
+#resumen de los datos
+summary(dataproyectofinal)
+
+```
+## Datos faltantes
+
+De lo anterior podemos observar que solamente existen valores faltantes en toda la columna de nombre ...33, por lo tanto, esta será eliminada del conjunto de datos.
+```{r datosfaltantes} 
+#Eliminar la columna ...33
+dataproyectofinal <- dataproyectofinal %>% select(-...33)
+head(dataproyectofinal)
+```
+
+## Limpieza de duplicados
+
+Para ver si todos los datos son únicos, se realizará una revisión por IDs.
+
+```{r duplicados}
+# Revisar valores duplicados en las IDs
+dataproyectofinal %>%
+  group_by(id) %>%
+  summarise(count = n()) %>%
+  filter(count > 1)
+
+
+```
+Luego de aplicado el proceso, podemos observar que no existen IDs repetidas, por lo tanto, borraremos la columna "id", ya que no servirá para el análisis.
+
+```{r borrarids}
+#borrar la columna Id
+dataproyectofinal <- dataproyectofinal %>% select(-id)
+head(dataproyectofinal)
+```
+## Datos atipicos
+
+No se eliminarán los valores atípicos del conjunto de datos, dado que representan variaciones significativas que podrían ser fundamentales para el análisis. Estos valores pueden indicar comportamientos o casos extremos que, aunque no comunes, son parte integral del fenómeno bajo estudio. Eliminar estos valores podría llevar a una interpretación errónea de los datos, omitiendo potencialmente patrones importantes.
+
+
+
+# Análisis exploratorio de datos
+
+## Estadísticas descriptivas 
+
+Primero realizaremos un análisis descriptivo de los datos para resumir las características principales del conjunto de datos.
+
+```{r descriptivo}
+psych_stats <- psych::describe(dataproyectofinal)
+psych_stats
+
+```
+## Visualizaciones
+A continuación, se realizarán gráficos de pares, lo cual ayudará a identificar qué variables tienen fuertes correlaciones lineales o patrones discernibles entre sí. En este caso se realizará para alguno de los atributos. Además, para obtener una vista clara y comparativa de las características estos serán normalizados.
+```{r pairs}
+
+normalize <- function(x) {
+  return ((x - min(x)) / (max(x) - min(x)))
+}
+data_normalized <- as.data.frame(lapply(dataproyectofinal[ , 2:ncol(dataproyectofinal)], normalize))
+
+# Agregar de nuevo la columna diagnosis
+data_normalized$diagnosis <- dataproyectofinal$diagnosis
+
+
+
+
+#seleccionar alguno de los atributos
+p <- ggpairs(data_normalized,
+             columns = c("radius_mean", "texture_mean", "perimeter_mean", "area_mean", "smoothness_mean"),
+             ggplot2::aes(color = diagnosis))
+
+# Ajustar los ángulos de las etiquetas de los ejes
+p <- p + theme(text = element_text(size = 10),  # Ajusta el tamaño del texto general
+               axis.text.x = element_text(angle = 45, vjust = 0.5, hjust = 1))  
+
+print(p)
+
+```
+
+
+
+Realizaremos una matriz de correlación, para observar si existen relaciones significativas entre las diferentes características del conjunto de datos. Además, aplicaremos una transformación a diagnosis.
+```{r correlacion}
+
+
+
+
+
+# Codificar 'diagnosis' como numérica
+data_normalized$diagnosis <- as.numeric(factor(data_normalized$diagnosis, levels = c("B", "M")))
+
+# Calcular la matriz de correlación 
+cor_matrix <- cor(data_normalized, use = "complete.obs")
+
+ 
+
+
+corrplot(cor_matrix, method = "color", 
+        
+         order = "AOE", 
+         tl.col = "black",  
+         tl.srt = 45,       
+         tl.cex = 0.6,      
+       )
+
+```
+
+
+## Discusión de hallazgos
+En la visualización de pares se puede observar que variables como radius_mean, perimeter_mean y area_mean muestran correlaciones muy altas entre sí. Esta fuerte correlación es lógica, dado que todas son medidas de tamaño y dimensión del tumor. De la matriz podemos observar que hay bloques de alta correlación que confirman lo observado en el gráfico de pares. Variables relacionadas con las dimensiones físicas del tumor están altamente correlacionadas entre sí.
+
+# Transformaciones de datos
+Aun que anteriormente ya se realizaron transformaciones, estaban destinadas a mejorar las visualizaciones. Por lo tanto, se decidió estandarizar los datos para asegurar que todas las características contribuyan equitativamente a futuros modelos que se vean beneficiados. En caso de necesitar los datos normalizados, tendremos los utilizados anteriormente.
+
+
+  
+
+
+```{r transformacionbasica} 
+
+data_scaled <- as.data.frame(scale(dataproyectofinal[ , 2:ncol(dataproyectofinal)]))
+
+# Agregar de nuevo la columna diagnosis
+data_scaled$diagnosis <- dataproyectofinal$diagnosis
+
+# Codificación de la variable categórica
+data_scaled$diagnosis <- ifelse(data_scaled$diagnosis == 'M', 1, 0)
+head(data_scaled)
+
+```
+
+# Interpretación y conclusiones
+
+## Interpretación de resultados
+La visualización de pair plot muestra agrupaciones distintas para tumores benignos y malignos en función de múltiples características. Se puede observar que radius_mean y texture_mean muestran diferencias significativas entre tumores benignos y malignos. Los tumores malignos tienden a tener valores más altos en estas características. 
+
+## Respuesta a las preguntas de investigación
+- **¿Cuáles son las características más influyentes para determinar si un tumor es maligno o benigno?**
+
+Las características más influyentes a simple vista son radius_mean, perimeter_mean y area_mean, ya que presentan las diferencias más significativas entre tumores benignos y malignos y están altamente correlacionadas entre sí.
+
+- **¿Es posible desarrollar un modelo predictivo para el diagnóstico del cáncer de mama utilizando este conjunto de datos?**
+
+Sí, es posible. La alta correlación y la clara separación observada en las visualizaciones sugieren que un modelo predictivo puede diferenciar entre tumores benignos y malignos.
+
+- **¿Existen patrones o relaciones significativas entre las diferentes características del tumor y su diagnóstico?**
+
+Sí, existen patrones significativos. Las características relacionadas con el tamaño del tumor (radius_mean, perimeter_mean, area_mean) están altamente correlacionadas y muestran una separación clara entre tumores benignos y malignos. Estos patrones se repiten en múltiples visualizaciones.
